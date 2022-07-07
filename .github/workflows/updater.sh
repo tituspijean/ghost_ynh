@@ -23,12 +23,32 @@ assets=($(curl --silent "https://api.github.com/repos/$repo/releases" | jq -r '[
 admin_repo="TryGhost/Admin"
 assets+=("https://github.com/TryGhost/Admin/archive/refs/tags/${version}.zip")
 
+theme_repo="TryGhost/Casper"
+theme_version=$(curl --silent "https://api.github.com/repos/$theme_repo/releases" | jq -r '.[] | select( .prerelease != true ) | .tag_name' | sort -V | tail -1)
+theme_body=$(curl --silent "https://api.github.com/repos/$theme_repo/releases" | jq -r '.[] | select(.tag_name=="'$theme_version'").body')
+
 # Later down the script, we assume the version has only digits and dots
 # Sometimes the release name starts with a "v", so let's filter it out.
 # You may need more tweaks here if the upstream repository has different naming conventions.
 if [[ ${version:0:1} == "v" || ${version:0:1} == "V" ]]; then
     version=${version:1}
 fi
+
+if [[ $theme_body =~ ^\*\*Compatible\ with\ Ghost\ ≥\ ([0-9\.]+) ]]
+    then
+        dpkg --compare-versions $version ge ${BASH_REMATCH[1]}
+        if [[ $(dpkg --compare-versions $version ge ${BASH_REMATCH[1]}) ]]
+        then
+            echo "::notice ::Adding Casper theme asset for v${theme_version}"
+            assets+=("https://github.com/TryGhost/Casper/archive/refs/tags/${theme_version}.zip")
+        else
+            echo "::warning ::Somehow latest Casper theme version is for higher version than Ghost's latest. Check that manually."
+        fi
+    else
+    echo "::warning ::Could not detect minimum version for Casper theme. Check it manually."
+fi
+
+echo ${BASH_REMATCH[1]}
 
 # Setting up the environment variables
 echo "Current version: $current_version"
@@ -72,6 +92,9 @@ case $asset_url in
     ;;
   *"/Admin/"*)
     src="admin"
+    ;;
+  *"/Casper/"*)
+    src="casper"
     ;;
   *)
     src=""
@@ -134,4 +157,3 @@ echo "$(jq -s --indent 4 ".[] | .version = \"$version~ynh1\"" manifest.json)" > 
 # The Action will proceed only if the PROCEED environment variable is set to true
 echo "PROCEED=true" >> $GITHUB_ENV
 exit 0
-

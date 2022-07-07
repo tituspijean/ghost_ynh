@@ -107,6 +107,10 @@ then
 	mkdir -p $final_path/core/client/Admin
 	ynh_setup_source --dest_dir="$final_path/core/client/Admin" --source_id="admin"
 
+	# Download, check integrity, uncompress and patch the source from casper.src
+	mkdir -p $final_path/core/client/Admin
+	ynh_setup_source --dest_dir="$final_path/content/themes/casper" --source_id="casper"
+
 	# Copy the admin saved settings from tmp directory to final path
 	cp -ar "$tmpdir/config.production.json" "$final_path/config.production.json"
 

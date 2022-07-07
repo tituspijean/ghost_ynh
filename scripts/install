@@ -103,6 +103,10 @@ ynh_setup_source --dest_dir="$final_path"
 mkdir -p $final_path/core/client/Admin
 ynh_setup_source --dest_dir="$final_path/core/client/Admin" --source_id="admin"
 
+# Download, check integrity, uncompress and patch the source from casper.src
+mkdir -p $final_path/core/client/Admin
+ynh_setup_source --dest_dir="$final_path/content/themes/casper" --source_id="casper"
+
 chmod 750 "$final_path"
 chmod -R o-rwx "$final_path"
 chown -R $app:www-data "$final_path"
